@@ -1,0 +1,794 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OA: Energía Eólica - Ingeniería</title>
+    <style>
+        :root {
+            --fondo: #FFFFFF;
+            --titulos: #1F3A5F;
+            --variables: #0F7C82;
+            --resultados: #F57C00;
+            --gris-claro: #F9F9F9;
+            --borde: #ECECEC;
+            --cielo: #E3F2FD;
+            --pasto: #C8E6C9;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: "Open Sans", Arial, sans-serif;
+            background-color: var(--fondo);
+            color: #333;
+            line-height: 1.6;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        /* Navegación y Estructura */
+        #main-container {
+            max-width: 1000px;
+            margin: 0 auto;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            background: white;
+            box-shadow: 0 0 20px rgba(0,0,0,0.05);
+        }
+
+        header {
+            padding: 1rem 2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            border-bottom: 2px solid var(--titulos);
+            background: white;
+            z-index: 10;
+        }
+
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .indicador {
+            font-weight: bold;
+            color: var(--titulos);
+            font-size: 1.2rem;
+        }
+
+        /* MENÚ DE PESTAÑAS */
+        .tabs {
+            display: flex;
+            gap: 0.5rem;
+            overflow-x: auto;
+            padding-bottom: 0.5rem;
+        }
+
+        .tab-btn {
+            padding: 0.6rem 1.2rem;
+            background: var(--gris-claro);
+            border: 1px solid var(--borde);
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            color: #555;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+
+        .tab-btn:hover { background: #e0e0e0; }
+        .tab-btn.active-tab {
+            background: var(--titulos);
+            color: white;
+            border-color: var(--titulos);
+        }
+
+        .screen { display: none; padding: 2rem; flex-grow: 1; }
+        .screen.active { display: block; animation: fadeIn 0.4s ease-out; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Tipografía */
+        h1, h2, h3 { color: var(--titulos); margin-bottom: 1.2rem; }
+        h1 { font-size: 2.4rem; border-bottom: 4px solid var(--variables); display: inline-block; margin-bottom: 2rem; }
+        h2 { font-size: 1.6rem; margin-top: 1.5rem; text-transform: uppercase; letter-spacing: 1px; }
+
+        .variable { color: var(--variables); font-weight: bold; }
+        .resultado { color: var(--resultados); font-weight: bold; }
+
+        /* Botones */
+        .nav-buttons { display: flex; gap: 1rem; margin-top: 2.5rem; justify-content: center; flex-wrap: wrap; }
+        button.btn-accion {
+            padding: 0.8rem 1.8rem;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            border: none;
+            border-radius: 6px;
+            transition: all 0.2s;
+            font-family: inherit;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        button.btn-accion:active { transform: translateY(2px); box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .btn-primario { background-color: var(--titulos); color: white; }
+        .btn-primario:hover { background-color: #2a4f7d; transform: translateY(-2px); box-shadow: 0 6px 12px rgba(0,0,0,0.15); }
+        .btn-ayuda { background-color: var(--variables); color: white; padding: 0.5rem 1rem; border:none; border-radius: 6px; cursor:pointer; font-weight:bold; }
+        .btn-outline { background-color: transparent; border: 2px solid var(--titulos); color: var(--titulos); box-shadow: none; }
+        .btn-outline:hover { background-color: var(--gris-claro); }
+
+        /* Estilos Portada */
+        .portada-hero {
+            background: linear-gradient(to bottom, var(--cielo) 0%, #FFFFFF 100%);
+            border-radius: 12px;
+            padding: 3rem 2rem;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            margin-bottom: 2rem;
+            border: 1px solid var(--borde);
+        }
+
+        .portada-title { font-size: 3.5rem; color: var(--titulos); border: none; margin-bottom: 0.5rem; text-shadow: 2px 2px 4px rgba(0,0,0,0.1); position: relative; z-index: 2; }
+        .portada-subtitle { font-size: 1.5rem; color: var(--variables); margin-bottom: 2rem; font-weight: 600; position: relative; z-index: 2; }
+        
+        .portada-description {
+            max-width: 800px; margin: 0 auto; font-size: 1.15rem; color: #444; background: rgba(255,255,255,0.95);
+            padding: 1.5rem; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); position: relative;
+            z-index: 2; text-align: left; border-left: 5px solid var(--resultados);
+        }
+
+        .cloud { fill: white; opacity: 0.9; }
+        @keyframes floatCloud1 { from { transform: translateX(-100px); } to { transform: translateX(1000px); } }
+        @keyframes floatCloud2 { from { transform: translateX(900px); } to { transform: translateX(-200px); } }
+        .hero-animation { width: 100%; height: 250px; margin-bottom: 1rem; position: relative; z-index: 1; }
+
+        /* Contenido Conceptual (Pantalla 2) */
+        .text-block { background: var(--gris-claro); padding: 1.5rem; border-radius: 8px; margin-bottom: 2rem; border-left: 5px solid var(--variables); }
+        .text-block p { font-size: 1.1rem; color: #444; margin-bottom: 1rem; }
+        .formula-destacada { font-size: 2.2rem; text-align: center; padding: 1.5rem; color: white; background: var(--titulos); margin: 2rem 0; border-radius: 8px; font-family: "Georgia", serif; box-shadow: inset 0 0 10px rgba(0,0,0,0.3); }
+
+        .svg-container { text-align: center; margin: 1.5rem 0; background: white; padding: 1.5rem; border-radius: 8px; border: 1px solid var(--borde); box-shadow: 0 4px 10px rgba(0,0,0,0.03); }
+        .svg-container svg { max-width: 100%; height: auto; display: block; margin: 0 auto; }
+        .caption { font-size: 0.95rem; color: #666; font-style: italic; margin-top: 10px; }
+
+        /* Simulador (Pantalla 3) */
+        .controls-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; margin-bottom: 2rem; }
+        .block-panel { background: var(--gris-claro); padding: 1.5rem; border-radius: 8px; border: 1px solid var(--borde); }
+
+        .control-item label { display: block; font-weight: bold; color: var(--titulos); margin-bottom: 0.5rem; font-size: 1.05rem; }
+        input[type="range"] { width: 100%; accent-color: var(--variables); cursor: pointer; height: 8px; }
+
+        .outputs-container { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 2rem; }
+        .output-card { background: white; padding: 1.5rem; border: 1px solid var(--borde); text-align: center; border-top: 5px solid var(--resultados); border-radius: 6px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .output-card.betz-card { border-top-color: #2E7D32; background: #F1F8E9; }
+
+        /* Visualizador SVG Simulador */
+        .visualizer {
+            background: linear-gradient(to bottom, #E1F5FE 0%, #B3E5FC 100%);
+            height: 500px; width: 100%; border-radius: 8px; margin-top: 1rem; position: relative;
+            display: flex; align-items: center; justify-content: center; border: 2px solid var(--titulos);
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.1); overflow: hidden;
+        }
+
+        /* Tabla Comparativa */
+        .comparison-section { background: white; padding: 2rem; border-radius: 8px; border: 1px solid var(--borde); margin-top: 2.5rem; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+        th, td { border: 1px solid var(--borde); padding: 1rem; text-align: center; }
+        th { background: var(--titulos); color: white; font-size: 1.1rem; }
+        td:first-child { text-align: left; font-weight: bold; background: var(--gris-claro); width: 35%; }
+        
+        .insights-box { display: none; background: #E3F2FD; border-left: 5px solid #2196F3; padding: 1.5rem; margin-top: 1.5rem; border-radius: 0 8px 8px 0; font-size: 1.05rem; line-height: 1.6; }
+
+        /* Evaluacion (Pantalla 4) */
+        .question-block { background: white; padding: 2rem; border-radius: 8px; margin-bottom: 2rem; border-left: 5px solid var(--resultados); box-shadow: 0 4px 10px rgba(0,0,0,0.05); border: 1px solid var(--borde); }
+        .question-block label { font-weight: bold; color: var(--titulos); display: block; margin-bottom: 1.2rem; font-size: 1.2rem; }
+        
+        .quiz-btn { display: block; width: 100%; text-align: left; padding: 15px; margin: 10px 0; border: 2px solid var(--borde); border-radius: 8px; background: white; cursor: pointer; transition: all 0.2s; font-size: 1.05rem; color: #444; }
+        .quiz-btn:hover { background: var(--gris-claro); border-color: var(--variables); transform: translateX(5px); }
+        .quiz-btn.correct { background: #E8F5E9; border-color: #4CAF50; color: #2E7D32; font-weight: bold; }
+        .quiz-btn.incorrect { background: #FFEBEE; border-color: #F44336; color: #C62828; }
+        .feedback { display: none; padding: 15px; margin-top: 15px; border-radius: 6px; font-size: 1rem; line-height: 1.5; }
+        .correct-feedback { background: #E8F5E9; color: #2E7D32; border-left: 5px solid #4CAF50; }
+        .incorrect-feedback { background: #FFEBEE; color: #C62828; border-left: 5px solid #F44336; }
+
+        /* Footer de créditos */
+        .footer-creditos {
+            text-align: center;
+            padding: 1.5rem;
+            margin-top: auto;
+            border-top: 1px solid var(--borde);
+            background-color: var(--gris-claro);
+            color: #666;
+            font-size: 0.95rem;
+            font-weight: 600;
+        }
+
+        /* Modal */
+        #help-panel { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 90%; max-width: 650px; background: white; border-top: 6px solid var(--titulos); padding: 2.5rem; z-index: 1000; box-shadow: 0 20px 50px rgba(0,0,0,0.5); border-radius: 8px; }
+        #help-panel h2 { margin-top: 0; }
+        #help-panel p { margin-bottom: 1rem; font-size: 1.05rem; }
+        .overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 999; backdrop-filter: blur(3px); }
+
+        @media (max-width: 768px) { 
+            .controls-grid, .outputs-container { grid-template-columns: 1fr; }
+            .tabs { flex-wrap: wrap; }
+            .tab-btn { flex-grow: 1; text-align: center; }
+        }
+    </style>
+</head>
+<body>
+
+<div id="main-container">
+    <header>
+        <div class="header-top">
+            <div class="indicador" id="progress">Paso 1 de 4</div>
+            <button class="btn-ayuda" onclick="toggleHelp(true)">? Ayuda</button>
+        </div>
+        <div class="tabs">
+            <button class="tab-btn active-tab" id="tab-1" onclick="nav(1)">1. Portada</button>
+            <button class="tab-btn" id="tab-2" onclick="nav(2)">2. Teoría Física</button>
+            <button class="tab-btn" id="tab-3" onclick="nav(3)">3. Simulador Interactivo</button>
+            <button class="tab-btn" id="tab-4" onclick="nav(4)">4. Evaluación</button>
+        </div>
+    </header>
+
+    <!-- PANTALLA 1: PORTADA -->
+    <section id="s1" class="screen active" style="padding: 1rem;">
+        <div class="portada-hero">
+            <h1 class="portada-title">Energía Eólica</h1>
+            <div class="portada-subtitle">Variables Físicas y Estimación de Potencia</div>
+            
+            <div class="hero-animation">
+                <svg width="100%" height="250" viewBox="0 0 900 250" preserveAspectRatio="xMidYMax slice">
+                    <g style="animation: floatCloud1 45s linear infinite;"><path class="cloud" d="M150,80 Q170,60 200,80 Q220,70 240,90 Q260,80 270,100 L140,100 Q130,90 150,80 Z"/></g>
+                    <g style="animation: floatCloud2 55s linear infinite;"><path class="cloud" d="M600,50 Q630,20 670,50 Q700,40 720,70 Q750,60 760,80 L580,80 Q570,60 600,50 Z"/></g>
+                    <path d="M-100,250 Q100,150 450,250 Z" fill="#A5D6A7"/>
+                    <path d="M350,250 Q600,180 1000,250 Z" fill="#81C784"/>
+                    
+                    <g transform="translate(300, 190) scale(0.6)">
+                        <path d="M -5 0 L -2 -110 L 2 -110 L 5 0 Z" fill="#CFD8DC"/>
+                        <path d="M -10 -116 L 15 -116 C 20 -116 20 -104 15 -104 L -10 -104 Z" fill="#B0BEC5"/>
+                        <g transform="translate(-10, -110)"><g><animateTransform attributeName="transform" type="rotate" from="0 0 0" to="360 0 0" dur="4s" repeatCount="indefinite" />
+                            <path d="M 0 0 C -4 -20, -7 -60, -1 -90 C 3 -60, 3 -20, 0 0 Z" fill="white" stroke="#B0BEC5" stroke-width="0.5"/>
+                            <path d="M 0 0 C -4 -20, -7 -60, -1 -90 C 3 -60, 3 -20, 0 0 Z" fill="white" stroke="#B0BEC5" stroke-width="0.5" transform="rotate(120)"/>
+                            <path d="M 0 0 C -4 -20, -7 -60, -1 -90 C 3 -60, 3 -20, 0 0 Z" fill="white" stroke="#B0BEC5" stroke-width="0.5" transform="rotate(240)"/>
+                            <path d="M 2 -6 C -8 -6 -8 6 2 6 Z" fill="#1F3A5F"/>
+                        </g></g>
+                    </g>
+                    
+                    <g transform="translate(680, 210) scale(0.8)">
+                        <path d="M -6 0 L -2.5 -130 L 2.5 -130 L 6 0 Z" fill="#CFD8DC"/>
+                        <path d="M -12 -136 L 18 -136 C 24 -136 24 -124 18 -124 L -12 -124 Z" fill="#B0BEC5"/>
+                        <g transform="translate(-12, -130)"><g><animateTransform attributeName="transform" type="rotate" from="0 0 0" to="360 0 0" dur="3s" repeatCount="indefinite" />
+                            <path d="M 0 0 C -5 -25, -8 -75, -1 -110 C 4 -75, 4 -25, 0 0 Z" fill="white" stroke="#B0BEC5" stroke-width="0.5"/>
+                            <path d="M 0 0 C -5 -25, -8 -75, -1 -110 C 4 -75, 4 -25, 0 0 Z" fill="white" stroke="#B0BEC5" stroke-width="0.5" transform="rotate(120)"/>
+                            <path d="M 0 0 C -5 -25, -8 -75, -1 -110 C 4 -75, 4 -25, 0 0 Z" fill="white" stroke="#B0BEC5" stroke-width="0.5" transform="rotate(240)"/>
+                            <path d="M 2 -7 C -9 -7 -9 7 2 7 Z" fill="#1F3A5F"/>
+                        </g></g>
+                    </g>
+                </svg>
+            </div>
+
+            <div class="portada-description">
+                <p>Bienvenido al Objeto de Aprendizaje Interactivo sobre la generación de energía mediante aerogeneradores.</p>
+                <p>A través de este módulo, explorarás cómo tres variables fundamentales —la <strong>velocidad del viento (<span class="variable">v</span>)</strong>, la <strong>densidad del aire (<span class="variable">ρ</span>)</strong> y el <strong>diámetro del rotor (<span class="variable">D</span>)</strong>— determinan la potencia teórica disponible.</p>
+            </div>
+            
+            <div class="nav-buttons" style="margin-top: 2rem;">
+                <button class="btn-accion btn-primario" onclick="nav(2)">Continuar a Teoría ➔</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- PANTALLA 2: CONTENIDO CONCEPTUAL -->
+    <section id="s2" class="screen">
+        <h1>Fundamentos Físicos</h1>
+        
+        <h2>1. Parámetros físicos determinantes</h2>
+        
+        <!-- TEXTO 1: Velocidad -->
+        <div class="text-block">
+            <h3>Velocidad del viento (<span class="variable">v</span>)</h3>
+            <p>La potencia del viento depende del <strong>cubo de la velocidad (v³)</strong>. Esto implica que pequeñas variaciones en la velocidad generan incrementos significativos en la energía disponible. Por esta razón, la velocidad del viento es el factor de mayor impacto en el rendimiento eólico.</p>
+            
+            <div class="svg-container">
+                <svg viewBox="0 0 500 250" width="100%" height="250">
+                    <defs>
+                        <marker id="arrowHead" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+                            <path d="M0,0 L0,6 L9,3 z" fill="#1F3A5F" />
+                        </marker>
+                    </defs>
+                    <!-- Ejes -->
+                    <line x1="50" y1="210" x2="450" y2="210" stroke="#1F3A5F" stroke-width="2" marker-end="url(#arrowHead)"/>
+                    <line x1="50" y1="210" x2="50" y2="20" stroke="#1F3A5F" stroke-width="2" marker-end="url(#arrowHead)"/>
+                    <text x="430" y="235" font-family="Arial" font-size="14" fill="#1F3A5F" font-weight="bold">Velocidad (v)</text>
+                    <text x="15" y="30" font-family="Arial" font-size="14" fill="#1F3A5F" font-weight="bold" transform="rotate(-90 20 120)">Potencia (P)</text>
+                    
+                    <!-- Línea Lineal -->
+                    <path d="M 50 210 L 400 100" stroke="#999" stroke-width="2" stroke-dasharray="6,4" fill="none" />
+                    <text x="350" y="90" font-family="Arial" font-size="12" fill="#999">Crecimiento lineal</text>
+                    
+                    <!-- Curva Cúbica -->
+                    <path d="M 50 210 Q 250 210, 400 30" stroke="#F57C00" stroke-width="4" fill="none" />
+                    <text x="310" y="25" font-family="Arial" font-size="14" fill="#F57C00" font-weight="bold">Crecimiento cúbico (v³)</text>
+                    
+                    <!-- Puntos de ejemplo -->
+                    <circle cx="200" cy="184" r="5" fill="#0F7C82"/>
+                    <circle cx="300" cy="115" r="5" fill="#0F7C82"/>
+                    <line x1="200" y1="210" x2="200" y2="184" stroke="#0F7C82" stroke-dasharray="3" />
+                    <line x1="300" y1="210" x2="300" y2="115" stroke="#0F7C82" stroke-dasharray="3" />
+                </svg>
+                <div class="caption">Comparación visual entre un crecimiento lineal y el crecimiento cúbico de la potencia.</div>
+            </div>
+        </div>
+
+        <!-- TEXTO 2: Densidad -->
+        <div class="text-block">
+            <h3>Densidad del aire (<span class="variable">ρ</span>)</h3>
+            <p>La densidad del aire (ρ) depende de la temperatura, presión atmosférica y altitud. A mayor densidad, mayor masa de aire atraviesa el rotor por unidad de volumen, lo que incrementa la energía disponible. En zonas de gran altitud, la menor densidad reduce el potencial energético.</p>
+            
+            <div class="svg-container">
+                <svg viewBox="0 0 600 250" width="100%" height="250">
+                    <!-- Fondo cielo -->
+                    <rect x="0" y="0" width="600" height="250" fill="#E3F2FD" />
+                    
+                    <!-- Océano (Nivel del mar) -->
+                    <path d="M 0 180 L 250 180 Q 280 180, 300 190 L 300 250 L 0 250 Z" fill="#4FC3F7" />
+                    <text x="120" y="220" font-family="Arial" font-size="14" fill="#1F3A5F" font-weight="bold" text-anchor="middle">Nivel del Mar</text>
+                    <text x="120" y="240" font-family="Arial" font-size="12" fill="#0F7C82" font-weight="bold" text-anchor="middle">Alta Densidad (ρ)</text>
+                    
+                    <!-- Montaña (Altitud) -->
+                    <path d="M 250 250 L 450 60 L 600 250 Z" fill="#BCAAA4" />
+                    <path d="M 450 60 L 400 120 L 450 140 L 490 110 Z" fill="#FFFFFF" opacity="0.8"/> <!-- Nieve -->
+                    <text x="500" y="100" font-family="Arial" font-size="14" fill="#1F3A5F" font-weight="bold" text-anchor="middle">Alta Montaña</text>
+                    <text x="500" y="120" font-family="Arial" font-size="12" fill="#F57C00" font-weight="bold" text-anchor="middle">Baja Densidad (ρ)</text>
+
+                    <!-- Partículas de aire (Más densas a la izquierda/abajo, menos a la derecha/arriba) -->
+                    <g fill="#1F3A5F" opacity="0.6">
+                        <!-- Mar (Alta densidad) -->
+                        <circle cx="40" cy="150" r="3"/><circle cx="60" cy="130" r="3"/><circle cx="80" cy="160" r="3"/>
+                        <circle cx="100" cy="140" r="3"/><circle cx="120" cy="170" r="3"/><circle cx="140" cy="120" r="3"/>
+                        <circle cx="160" cy="150" r="3"/><circle cx="180" cy="130" r="3"/><circle cx="200" cy="160" r="3"/>
+                        <circle cx="50" cy="110" r="3"/><circle cx="90" cy="100" r="3"/><circle cx="130" cy="90" r="3"/>
+                        <circle cx="170" cy="110" r="3"/><circle cx="210" cy="140" r="3"/><circle cx="230" cy="170" r="3"/>
+                        <circle cx="30" cy="80" r="3"/><circle cx="70" cy="70" r="3"/><circle cx="110" cy="60" r="3"/>
+                        <circle cx="150" cy="70" r="3"/><circle cx="190" cy="80" r="3"/><circle cx="240" cy="120" r="3"/>
+                        
+                        <!-- Montaña (Baja densidad) -->
+                        <circle cx="350" cy="50" r="3"/><circle cx="390" cy="40" r="3"/><circle cx="450" cy="20" r="3"/>
+                        <circle cx="500" cy="40" r="3"/><circle cx="550" cy="30" r="3"/><circle cx="420" cy="70" r="3"/>
+                        <circle cx="480" cy="60" r="3"/><circle cx="530" cy="80" r="3"/><circle cx="580" cy="50" r="3"/>
+                    </g>
+                </svg>
+                <div class="caption">Comparación de la densidad de partículas de aire entre condiciones a nivel del mar y en alta montaña.</div>
+            </div>
+        </div>
+
+        <!-- TEXTO 3: Área / Diámetro -->
+        <div class="text-block">
+            <h3>Área de barrido del rotor (<span class="variable">A</span>)</h3>
+            <p>El área barrida por las aspas se calcula mediante <strong>A = πR²</strong>. Un aumento en el radio del rotor incrementa el área de captación de manera cuadrática, permitiendo interceptar mayor cantidad de energía cinética del viento.</p>
+            
+            <div class="svg-container">
+                <!-- Se amplió el viewBox de 250 a 300 para que no se corten los textos inferiores -->
+                <svg viewBox="0 0 600 300" width="100%" height="300">
+                    
+                    <!-- Turbina Pequeña -->
+                    <g transform="translate(150, 150)">
+                        <circle cx="0" cy="0" r="50" fill="rgba(15,124,130,0.1)" stroke="#0F7C82" stroke-width="2" stroke-dasharray="6,4" />
+                        <!-- Poste -->
+                        <rect x="-3" y="0" width="6" height="100" fill="#90A4AE" />
+                        <!-- Aspas -->
+                        <path d="M 0 0 L 0 -45 L 5 -20 Z" fill="#1F3A5F" />
+                        <path d="M 0 0 L 39 22 L 15 20 Z" fill="#1F3A5F" />
+                        <path d="M 0 0 L -39 22 L -20 15 Z" fill="#1F3A5F" />
+                        <circle cx="0" cy="0" r="4" fill="#F57C00" />
+                        <!-- Radio y texto -->
+                        <line x1="0" y1="0" x2="50" y2="0" stroke="#F57C00" stroke-width="2" />
+                        <text x="25" y="-10" font-family="Arial" font-size="12" fill="#F57C00" font-weight="bold">R</text>
+                    </g>
+                    <!-- Textos Turbina Pequeña reubicados -->
+                    <text x="150" y="40" font-family="Arial" font-size="14" fill="#1F3A5F" font-weight="bold" text-anchor="middle">Turbina Pequeña</text>
+                    <text x="150" y="60" font-family="Arial" font-size="12" fill="#666" text-anchor="middle">Área de captación menor</text>
+
+                    <!-- Turbina Grande -->
+                    <g transform="translate(450, 120)">
+                        <circle cx="0" cy="0" r="90" fill="rgba(245,124,0,0.1)" stroke="#F57C00" stroke-width="3" stroke-dasharray="6,4" />
+                        <!-- Poste -->
+                        <rect x="-4" y="0" width="8" height="130" fill="#90A4AE" />
+                        <!-- Aspas -->
+                        <path d="M 0 0 L 0 -85 L 8 -40 Z" fill="#1F3A5F" />
+                        <path d="M 0 0 L 73 42 L 30 40 Z" fill="#1F3A5F" />
+                        <path d="M 0 0 L -73 42 L -40 30 Z" fill="#1F3A5F" />
+                        <circle cx="0" cy="0" r="6" fill="#0F7C82" />
+                        <!-- Radio y texto -->
+                        <line x1="0" y1="0" x2="90" y2="0" stroke="#0F7C82" stroke-width="3" />
+                        <text x="45" y="-10" font-family="Arial" font-size="14" fill="#0F7C82" font-weight="bold">R × 2</text>
+                    </g>
+                    <!-- Textos Turbina Grande ahora dentro de la caja visible -->
+                    <text x="450" y="275" font-family="Arial" font-size="14" fill="#1F3A5F" font-weight="bold" text-anchor="middle">Turbina Grande</text>
+                    <text x="450" y="290" font-family="Arial" font-size="12" fill="#F57C00" font-weight="bold" text-anchor="middle">Área = x4 (Crecimiento cuadrático)</text>
+                </svg>
+                <div class="caption">Comparación del área de captación entre turbinas con diferentes diámetros.</div>
+            </div>
+        </div>
+
+        <!-- TEXTO 4: Ecuación y Límite de Betz -->
+        <h2>2. Modelo Matemático</h2>
+        <div class="formula-destacada">
+            P = ½ · ρ · A · v³
+        </div>
+        <p style="text-align: center; margin-bottom: 2rem; font-style: italic; color: #555;">Potencia teórica total disponible en el flujo de aire libre.</p>
+
+        <div class="text-block">
+            <h3>4.1 Límite de Betz</h3>
+            <p>El Límite de Betz establece que <strong>ninguna turbina puede convertir más del 59.3% de la energía cinética del viento en energía mecánica</strong>. Esta limitación física surge del análisis de conservación de masa y energía en sistemas de flujo. En consecuencia, la potencia real siempre será inferior a la potencia teórica calculada.</p>
+            
+            <div class="svg-container">
+                <!-- Aumentado un poco el height por precaución a 290 -->
+                <svg viewBox="0 0 500 290" width="100%" height="290">
+                    <!-- Fondo Barras -->
+                    <rect x="100" y="40" width="120" height="200" fill="#E0E0E0" rx="4" />
+                    <!-- Barra Potencia Teórica (100%) -->
+                    <rect x="100" y="40" width="120" height="200" fill="#90CAF9" rx="4" />
+                    <text x="160" y="30" font-family="Arial" font-size="16" fill="#1F3A5F" font-weight="bold" text-anchor="middle">100%</text>
+                    <text x="160" y="265" font-family="Arial" font-size="13" fill="#1F3A5F" font-weight="bold" text-anchor="middle">Potencia Teórica</text>
+                    
+                    <!-- Fondo Barras -->
+                    <rect x="280" y="40" width="120" height="200" fill="#E0E0E0" rx="4" />
+                    <!-- Barra Límite de Betz (59.3%) -->
+                    <rect x="280" y="121.4" width="120" height="118.6" fill="#81C784" rx="4" />
+                    
+                    <!-- Línea conectora -->
+                    <line x1="220" y1="121.4" x2="280" y2="121.4" stroke="#4CAF50" stroke-dasharray="4" stroke-width="2" />
+                    
+                    <text x="340" y="110" font-family="Arial" font-size="18" fill="#2E7D32" font-weight="bold" text-anchor="middle">59.3%</text>
+                    <text x="340" y="265" font-family="Arial" font-size="13" fill="#2E7D32" font-weight="bold" text-anchor="middle">Máxima Aprovechable</text>
+                    <text x="340" y="280" font-family="Arial" font-size="11" fill="#666" text-anchor="middle">(Límite de Betz)</text>
+
+                    <!-- Zona Perdida -->
+                    <path d="M 280 40 L 400 40 L 400 121.4 L 280 121.4 Z" fill="url(#diagonalHatch)" />
+                    <defs>
+                        <pattern id="diagonalHatch" width="8" height="8" patternTransform="rotate(45 0 0)" patternUnits="userSpaceOnUse">
+                            <line x1="0" y1="0" x2="0" y2="8" stroke="#FFCDD2" stroke-width="4" />
+                        </pattern>
+                    </defs>
+                    <text x="340" y="75" font-family="Arial" font-size="12" fill="#D32F2F" font-weight="bold" text-anchor="middle">Energía</text>
+                    <text x="340" y="90" font-family="Arial" font-size="12" fill="#D32F2F" font-weight="bold" text-anchor="middle">no extraíble</text>
+                </svg>
+                <div class="caption">Comparación entre la potencia teórica en el flujo del viento y la máxima potencia aprovechable (Límite de Betz).</div>
+            </div>
+        </div>
+
+        <div class="nav-buttons">
+            <button class="btn-accion btn-primario" onclick="nav(3)">Ir al Simulador Interactivo ➔</button>
+        </div>
+    </section>
+
+    <!-- PANTALLA 3: SIMULACIÓN INTERACTIVA -->
+    <section id="s3" class="screen">
+        <h1>Simulación Interactiva</h1>
+        <p style="margin-bottom: 2rem;">Ajusta los parámetros deslizando las barras para observar cómo varía la potencia generada y el comportamiento visual de la turbina.</p>
+
+        <div class="block-panel" style="margin-bottom: 2rem;">
+            <!-- Controles -->
+            <div class="controls-grid">
+                <div class="control-item">
+                    <label>Velocidad del viento (<span class="variable">v</span>): <span id="v-val" class="resultado">5.0</span> m/s</label>
+                    <input type="range" id="v-in" min="3" max="20" step="0.5" value="5">
+                </div>
+                <div class="control-item">
+                    <label>Densidad del aire (<span class="variable">ρ</span>): <span id="rho-val" class="resultado">1.225</span> kg/m³</label>
+                    <input type="range" id="rho-in" min="0.9" max="1.3" step="0.005" value="1.225">
+                </div>
+                <div class="control-item">
+                    <label>Diámetro del rotor (<span class="variable">D</span>): <span id="d-val" class="resultado">40.0</span> m</label>
+                    <input type="range" id="d-in" min="20" max="120" step="2" value="40">
+                </div>
+            </div>
+
+            <!-- Botones de Guardado -->
+            <div style="text-align: center; margin-top: 1rem; padding-top: 1.5rem; border-top: 1px solid var(--borde);">
+                <span style="font-weight: bold; color: var(--titulos); margin-right: 1rem;">Comparar Escenarios:</span>
+                <button class="btn-accion btn-outline" onclick="save('A')" style="border-color: #0F7C82; color: #0F7C82; margin-right: 0.5rem; padding: 0.5rem 1rem;">💾 Guardar A</button>
+                <button class="btn-accion btn-outline" onclick="save('B')" style="border-color: #F57C00; color: #F57C00; padding: 0.5rem 1rem;">💾 Guardar B</button>
+                <span id="save-msg" style="margin-left: 1rem; font-size: 0.9rem; font-weight: bold;"></span>
+            </div>
+        </div>
+
+        <!-- Resultados Numéricos -->
+        <div class="outputs-container">
+            <div class="output-card">
+                <h4 style="color: #666; margin-bottom: 5px; font-size: 1.1rem;">Potencia Teórica (P)</h4>
+                <div><span class="resultado" id="p-theo" style="font-size: 2.5rem;">0.0</span> <span class="resultado">kW</span></div>
+                <p style="font-size: 0.9rem; color: #888; margin-top: 5px;">Potencia bruta en el flujo de aire</p>
+            </div>
+            <div class="output-card betz-card">
+                <h4 style="color: #2E7D32; margin-bottom: 5px; font-size: 1.1rem;">Potencia Útil Máx. (Límite de Betz)</h4>
+                <div><span class="resultado" id="p-betz" style="font-size: 2.5rem; color: #2E7D32;">0.0</span> <span class="resultado" style="color: #2E7D32;">kW</span></div>
+                <p style="font-size: 0.9rem; color: #2E7D32; margin-top: 5px;">Máximo extraíble (59.3%)</p>
+            </div>
+        </div>
+
+        <!-- LA SIMULACIÓN VISUAL SVG -->
+        <div class="visualizer" id="viz">
+            <svg id="turbine-sim-svg" viewBox="0 0 1000 500" preserveAspectRatio="xMidYMid slice" style="width: 100%; height: 100%; display: block;">
+                <!-- Partículas de Viento Dinámicas -->
+                <g id="wind-particles-sim"></g>
+
+                <!-- Aerogenerador Centralizado -->
+                <g transform="translate(500, 450)">
+                    <path d="M -10 0 L -5 -280 L 5 -280 L 10 0 Z" fill="#90A4AE"/>
+                    <path d="M -20 -295 L 30 -295 C 38 -295 38 -275 30 -275 L -20 -275 Z" fill="#CFD8DC"/>
+                    <circle id="diameter-ring" cx="-20" cy="-285" r="80" fill="rgba(255,255,255,0.15)" stroke="#1F3A5F" stroke-dasharray="10" stroke-width="2"/>
+                    
+                    <g transform="translate(-20, -285)">
+                        <g id="rotor-group">
+                            <animateTransform id="rotor-anim" attributeName="transform" type="rotate" from="0 0 0" to="360 0 0" dur="2s" repeatCount="indefinite" />
+                            <path id="sim-b1" class="blade" d="" fill="white" stroke="#B0BEC5" stroke-width="0.5"/>
+                            <path id="sim-b2" class="blade" d="" fill="white" stroke="#B0BEC5" stroke-width="0.5" transform="rotate(120)"/>
+                            <path id="sim-b3" class="blade" d="" fill="white" stroke="#B0BEC5" stroke-width="0.5" transform="rotate(240)"/>
+                            <path d="M 5 -8 C -10 -8 -10 8 5 8 Z" fill="#1F3A5F"/>
+                        </g>
+                    </g>
+                </g>
+            </svg>
+
+            <div style="position: absolute; top: 15px; right: 15px; background: rgba(255,255,255,0.9); padding: 8px 15px; border-radius: 6px; font-size: 1.1rem; font-weight: bold; border: 2px solid var(--titulos); color: var(--titulos);">
+                Diámetro = <span id="v-diameter">40</span>m
+            </div>
+        </div>
+
+        <!-- Tabla Comparativa -->
+        <div class="comparison-section">
+            <h3 style="margin-bottom: 0.5rem; color: var(--titulos);">📊 Comparativa de Escenarios guardados</h3>
+            <table id="comp-table">
+                <thead>
+                    <tr>
+                        <th style="background: white; border:none;"></th>
+                        <th style="background: #0F7C82;">Configuración A</th>
+                        <th style="background: #F57C00;">Configuración B</th>
+                    </tr>
+                </thead>
+                <tbody id="comp-body">
+                    <tr><td>Velocidad (v)</td><td>-</td><td>-</td></tr>
+                    <tr><td>Densidad (ρ)</td><td>-</td><td>-</td></tr>
+                    <tr><td>Diámetro (D)</td><td>-</td><td>-</td></tr>
+                    <tr><td>Potencia Teórica</td><td>-</td><td>-</td></tr>
+                    <tr style="font-weight: bold; background: #F1F8E9;"><td>Potencia Útil (Betz)</td><td style="color:#2E7D32;">-</td><td style="color:#2E7D32;">-</td></tr>
+                </tbody>
+            </table>
+            <div id="comparison-insights" class="insights-box"></div>
+        </div>
+
+        <div class="nav-buttons">
+            <button class="btn-accion btn-primario" onclick="nav(4)">Pasar a la Evaluación ➔</button>
+        </div>
+    </section>
+
+    <!-- PANTALLA 4: EVALUACIÓN -->
+    <section id="s4" class="screen">
+        <h1>Análisis y Evaluación</h1>
+        <p style="margin-bottom: 2rem;">Responde a las siguientes preguntas basadas en lo que has simulado y aprendido.</p>
+        
+        <div class="question-block">
+            <label>1. Según la fórmula teórica, ¿por qué la velocidad del viento tiene el mayor impacto en la potencia generada?</label>
+            <button class="quiz-btn" onclick="checkAnswer(this, false, 'Incorrecto. La facilidad tecnológica no determina el peso matemático en la fórmula.')">A) Porque es más fácil de alterar tecnológicamente.</button>
+            <button class="quiz-btn" onclick="checkAnswer(this, true, '¡Correcto! En la fórmula, la velocidad está elevada al cubo (v³), por lo que un pequeño aumento en la velocidad genera un incremento exponencial en la potencia.')">B) Porque la potencia es proporcional al cubo de la velocidad (v³).</button>
+            <button class="quiz-btn" onclick="checkAnswer(this, false, 'Incorrecto. La densidad siempre importa y es multiplicativa.')">C) Porque la densidad del aire pierde importancia a altas velocidades.</button>
+            <div class="feedback"></div>
+        </div>
+
+        <div class="question-block">
+            <label>2. Diseñas unas nuevas aspas que duplican el diámetro del rotor original (D). ¿Qué ocurre con la potencia teórica extraíble?</label>
+            <button class="quiz-btn" onclick="checkAnswer(this, false, 'Incorrecto. Recuerda que el área es proporcional al cuadrado del radio.')">A) La potencia se duplica (x2).</button>
+            <button class="quiz-btn" onclick="checkAnswer(this, false, 'Incorrecto. Eso pasaría si duplicas la velocidad del viento, no el diámetro.')">B) La potencia se multiplica por ocho (x8).</button>
+            <button class="quiz-btn" onclick="checkAnswer(this, true, '¡Excelente! La potencia es proporcional al Área del rotor. Si el diámetro se multiplica por 2, el radio también. Como A = πR², el área se multiplica por 4, y por lo tanto capturarás 4 veces más energía.')">C) La potencia se cuadruplica (x4).</button>
+            <div class="feedback"></div>
+        </div>
+
+        <div class="question-block">
+            <label>3. ¿Cómo afecta la densidad del aire (ρ) a la potencia generada por el aerogenerador?</label>
+            <button class="quiz-btn" onclick="checkAnswer(this, true, '¡Correcto! Al ser una relación directamente proporcional en la fórmula, un aire más denso transferirá más energía cinética a las aspas del rotor.')">A) A mayor densidad, mayor potencia generada, ya que un aire más "pesado" ejerce mayor fuerza de empuje.</button>
+            <button class="quiz-btn" onclick="checkAnswer(this, false, 'Incorrecto. La densidad del aire sí es un factor determinante y forma parte de la ecuación principal de potencia.')">B) La densidad es irrelevante; lo único que importa para la potencia es el tamaño del rotor y la velocidad.</button>
+            <button class="quiz-btn" onclick="checkAnswer(this, false, 'Incorrecto. Es al revés. Un aire con menor densidad transfiere menos energía cinética a la turbina.')">C) A menor densidad, mayor potencia generada, porque el rotor gira con menos resistencia del aire.</button>
+            <div class="feedback"></div>
+        </div>
+    </section>
+
+    <!-- Footer de créditos -->
+    <div class="footer-creditos">
+        Elaborado por: Mildred Linkimer, Ph.D.
+    </div>
+
+</div>
+
+<!-- MODAL AYUDA -->
+<div class="overlay" id="overlay" onclick="toggleHelp(false)"></div>
+<div id="help-panel">
+    <h2>Guía Rápida de Uso</h2>
+    <p>Este Objeto de Aprendizaje consta de 4 secciones a las que puedes acceder usando <strong>las pestañas de arriba</strong>:</p>
+    <ul style="margin-left: 2rem; margin-bottom: 1.5rem; line-height: 1.8; color: #444;">
+        <li><strong>Portada:</strong> Presentación del tema.</li>
+        <li><strong>Teoría:</strong> Conceptos y fórmulas importantes.</li>
+        <li><strong>Simulador (¡Lo que buscas!):</strong> Mueve los controles deslizantes para cambiar viento, densidad y aspas. Observa el gráfico animado en tiempo real.</li>
+        <li><strong>Evaluación:</strong> Preguntas para probar lo aprendido.</li>
+    </ul>
+    <div style="text-align: center;">
+        <button class="btn-accion btn-primario" onclick="toggleHelp(false)">Entendido</button>
+    </div>
+</div>
+
+<script>
+    const state = { v: 5.0, rho: 1.225, d: 40.0, configA: null, configB: null };
+
+    function nav(s) {
+        document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
+        document.getElementById('s' + s).classList.add('active');
+        document.getElementById('progress').innerText = `Paso ${s} de 4`;
+        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active-tab'));
+        document.getElementById('tab-' + s).classList.add('active-tab');
+        window.scrollTo(0, 0);
+    }
+
+    function toggleHelp(show) {
+        const d = show ? 'block' : 'none';
+        document.getElementById('help-panel').style.display = d;
+        document.getElementById('overlay').style.display = d;
+    }
+
+    function calculate() {
+        const v = parseFloat(document.getElementById('v-in').value);
+        const rho = parseFloat(document.getElementById('rho-in').value);
+        const d = parseFloat(document.getElementById('d-in').value);
+        
+        const r = d / 2;
+        const area = Math.PI * Math.pow(r, 2);
+        const pTheo = 0.5 * rho * area * Math.pow(v, 3);
+        const pBetz = pTheo * 0.593;
+
+        document.getElementById('v-val').innerText = v.toFixed(1);
+        document.getElementById('rho-val').innerText = rho.toFixed(3);
+        document.getElementById('d-val').innerText = d.toFixed(1);
+        document.getElementById('v-diameter').innerText = d.toFixed(0);
+        document.getElementById('p-theo').innerText = (pTheo / 1000).toFixed(1);
+        document.getElementById('p-betz').innerText = (pBetz / 1000).toFixed(1);
+
+        updateVisuals(v, rho, d);
+    }
+
+    function updateVisuals(v, rho, d) {
+        const visualR = d * 1.83; 
+        document.getElementById('diameter-ring').setAttribute('r', visualR);
+
+        const w = Math.max(5, visualR * 0.12); 
+        const dPath = `M 0 0 C ${-w} ${-visualR*0.2}, ${-w*1.2} ${-visualR*0.6}, ${-w*0.2} ${-visualR} C ${w*0.8} ${-visualR*0.6}, ${w*0.5} ${-visualR*0.2}, 0 0 Z`;
+        
+        document.getElementById('sim-b1').setAttribute('d', dPath);
+        document.getElementById('sim-b2').setAttribute('d', dPath);
+        document.getElementById('sim-b3').setAttribute('d', dPath);
+
+        const speed = Math.max(0.3, 15 / v); 
+        document.getElementById('rotor-anim').setAttribute('dur', speed + 's');
+
+        const windContainer = document.getElementById('wind-particles-sim');
+        windContainer.innerHTML = ''; 
+        
+        const numLines = Math.floor(((rho - 0.9) / 0.4) * 40) + 15;
+        const animDur = Math.max(0.8, 18 / v); 
+
+        for(let i=0; i<numLines; i++) {
+            const y = 20 + Math.random() * 450; 
+            const delay = Math.random() * -5; 
+            const dur = animDur + (Math.random() * animDur * 0.3); 
+            const length = 30 + Math.random() * 60; 
+            const opacity = 0.3 + ((rho - 0.9) * 1.5); 
+            
+            const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            line.setAttribute('x1', '0');
+            line.setAttribute('y1', y);
+            line.setAttribute('x2', length);
+            line.setAttribute('y2', y);
+            line.setAttribute('stroke', 'white');
+            line.setAttribute('stroke-width', '3');
+            line.setAttribute('stroke-linecap', 'round');
+            line.setAttribute('opacity', opacity);
+            
+            const anim = document.createElementNS('http://www.w3.org/2000/svg', 'animateTransform');
+            anim.setAttribute('attributeName', 'transform');
+            anim.setAttribute('type', 'translate');
+            anim.setAttribute('from', '-150 0');
+            anim.setAttribute('to', '1100 0');
+            anim.setAttribute('dur', dur + 's');
+            anim.setAttribute('begin', delay + 's');
+            anim.setAttribute('repeatCount', 'indefinite');
+            
+            line.appendChild(anim);
+            windContainer.appendChild(line);
+        }
+
+        const dRatio = (rho - 0.9) / (1.3 - 0.9);
+        const bgStart = `rgba(179, 229, 252, ${0.4 + (dRatio * 0.6)})`;
+        const bgEnd = `rgba(129, 212, 250, ${0.4 + (dRatio * 0.6)})`; 
+        document.getElementById('viz').style.background = `linear-gradient(to bottom, ${bgStart} 0%, ${bgEnd} 100%)`;
+    }
+
+    function save(id) {
+        const v = parseFloat(document.getElementById('v-in').value);
+        const rho = parseFloat(document.getElementById('rho-in').value);
+        const d = parseFloat(document.getElementById('d-in').value);
+        const area = Math.PI * Math.pow(d/2, 2);
+        const p = (0.5 * rho * area * Math.pow(v, 3)) / 1000;
+        const pBetz = p * 0.593;
+        
+        state['config' + id] = { v, rho, d, p, pBetz };
+        updateTable(); 
+        
+        const msgBox = document.getElementById('save-msg');
+        msgBox.style.color = id === 'A' ? '#0F7C82' : '#F57C00';
+        msgBox.innerText = `✔ Guardado en Escenario ${id}`;
+        setTimeout(() => msgBox.innerText = '', 2500);
+    }
+
+    function updateTable() {
+        const body = document.getElementById('comp-body');
+        const insightsBox = document.getElementById('comparison-insights');
+        
+        let html = "";
+        const keys = [
+            {l: 'Velocidad (v)', k: 'v', u: 'm/s'},
+            {l: 'Densidad (ρ)', k: 'rho', u: 'kg/m³'},
+            {l: 'Diámetro (D)', k: 'd', u: 'm'},
+            {l: 'Potencia Teórica', k: 'p', u: 'kW'},
+            {l: 'Potencia Útil (Betz)', k: 'pBetz', u: 'kW'}
+        ];
+
+        keys.forEach((item, index) => {
+            const valA = state.configA ? state.configA[item.k].toFixed(item.k==='rho'?3:1) + ' ' + item.u : '-';
+            const valB = state.configB ? state.configB[item.k].toFixed(item.k==='rho'?3:1) + ' ' + item.u : '-';
+            const isBetz = index === 4;
+            const style = isBetz ? 'font-weight:bold; background:#F1F8E9;' : '';
+            const tdStyle = isBetz ? 'color:#2E7D32; font-weight:bold;' : '';
+            html += `<tr style="${style}"><td>${item.l}</td><td style="${tdStyle}">${valA}</td><td style="${tdStyle}">${valB}</td></tr>`;
+        });
+        body.innerHTML = html;
+
+        if (state.configA && state.configB) {
+            insightsBox.style.display = 'block';
+            const pA = state.configA.pBetz;
+            const pB = state.configB.pBetz;
+            
+            if (Math.abs(pA - pB) < 0.1) {
+                insightsBox.innerHTML = `<strong>💡 Análisis:</strong> Ambos escenarios generan prácticamente la misma potencia.`;
+            } else {
+                const mejor = pA > pB ? 'Configuración A' : 'Configuración B';
+                insightsBox.innerHTML = `<strong>💡 Análisis Inteligente:</strong> La <strong>${mejor}</strong> genera mayor potencia útil. Presta atención a cómo impacta el elevar la velocidad al cubo (v³) o el diámetro al cuadrado (D²).`;
+            }
+        }
+    }
+
+    function checkAnswer(btn, isCorrect, feedbackMsg) {
+        const container = btn.closest('.question-block');
+        const buttons = container.querySelectorAll('.quiz-btn');
+        buttons.forEach(b => { b.classList.remove('correct', 'incorrect'); });
+
+        if(isCorrect) { btn.classList.add('correct'); } else { btn.classList.add('incorrect'); }
+
+        const feedbackDiv = container.querySelector('.feedback');
+        feedbackDiv.style.display = 'block';
+        feedbackDiv.className = 'feedback ' + (isCorrect ? 'correct-feedback' : 'incorrect-feedback');
+        feedbackDiv.innerHTML = feedbackMsg;
+    }
+
+    document.querySelectorAll('input').forEach(i => i.addEventListener('input', calculate));
+    calculate(); 
+</script>
+
+</body>
+</html>
